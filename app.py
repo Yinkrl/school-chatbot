@@ -3,12 +3,10 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
-# Load variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 
-# Create OpenAI client using key from .env
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route("/")
@@ -22,7 +20,7 @@ def chat():
         user_msg = data["message"]
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # works with new OpenAI API
+            model="gpt-4o-mini",  
             messages=[
                 {"role": "system", "content": "You are a helpful school assistant."},
                 {"role": "user", "content": user_msg}
@@ -33,7 +31,6 @@ def chat():
         return jsonify({"response": bot_reply})
 
     except Exception as e:
-        # Print the error in the terminal and send a message back to the browser
         print("Error:", e)
         return jsonify({"response": "There was a server error: " + str(e)}), 500
 
