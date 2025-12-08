@@ -480,4 +480,25 @@ body.theme-light .tag {
     .side-panel {
         order: -1;
     }
+    .conversation-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.conversation-delete {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    opacity: 0.7;
+}
+
+.conversation-delete:hover {
+    opacity: 1;
+    color: #ff6b6b;
+}
 }

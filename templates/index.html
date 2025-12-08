@@ -95,7 +95,7 @@
         let conversations = [];
         let currentConversationId = null;
 
-        // - Theme handling -
+        // Theme handling
         function loadTheme() {
             const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
             if (savedTheme === "light") {
@@ -126,7 +126,7 @@
 
         themeToggleBtn.addEventListener("click", toggleTheme);
 
-        // - Helpers for localStorage conversations -
+        // Conversation storage
         function loadConversations() {
             const saved = localStorage.getItem(STORAGE_KEY_CONVOS);
             if (saved) {
@@ -161,21 +161,59 @@
             return conversations.find(c => c.id === currentConversationId);
         }
 
-        // - UI rendering -
+        // Delete logic
+        function deleteConversation(id) {
+            const index = conversations.findIndex(c => c.id === id);
+            if (index === -1) return;
+
+            conversations.splice(index, 1);
+
+            if (conversations.length === 0) {
+                const first = createNewConversation("New chat");
+                conversations.push(first);
+                currentConversationId = first.id;
+            } else if (currentConversationId === id) {
+                currentConversationId = conversations[0].id;
+            }
+
+            saveConversations();
+            renderConversationList();
+            renderChatWindow();
+        }
+
+        // UI rendering
         function renderConversationList() {
             conversationList.innerHTML = "";
             conversations.forEach(conv => {
                 const li = document.createElement("li");
-                li.textContent = conv.title;
                 li.classList.add("conversation-item");
                 if (conv.id === currentConversationId) {
                     li.classList.add("active");
                 }
-                li.addEventListener("click", () => {
+
+                const titleSpan = document.createElement("span");
+                titleSpan.textContent = conv.title;
+                titleSpan.classList.add("conversation-title");
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "×";
+                deleteBtn.classList.add("conversation-delete");
+
+                // Switch to this conversation when clicking the title area
+                titleSpan.addEventListener("click", () => {
                     currentConversationId = conv.id;
                     renderConversationList();
                     renderChatWindow();
                 });
+
+                // Delete button
+                deleteBtn.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    deleteConversation(conv.id);
+                });
+
+                li.appendChild(titleSpan);
+                li.appendChild(deleteBtn);
                 conversationList.appendChild(li);
             });
 
@@ -211,7 +249,6 @@
                     time: new Date().toISOString()
                 });
 
-                // First user message becomes the title
                 if (conv.title === "New chat" && sender === "user") {
                     conv.title = text.slice(0, 30) + (text.length > 30 ? "..." : "");
                 }
@@ -229,7 +266,7 @@
             }
         }
 
-        // - Event handlers -
+        // Events
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const text = userInput.value.trim();
@@ -255,7 +292,6 @@
 
                 showTyping(false);
                 addMessage(reply, "bot", true);
-
             } catch (err) {
                 console.error(err);
                 showTyping(false);
@@ -272,7 +308,7 @@
             renderChatWindow();
         });
 
-        // - Init -
+        // Init
         loadTheme();
         loadConversations();
         renderConversationList();
