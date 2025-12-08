@@ -20,7 +20,7 @@ def chat():
         user_msg = data["message"]
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful school assistant."},
                 {"role": "user", "content": user_msg}
@@ -28,11 +28,13 @@ def chat():
         )
 
         bot_reply = response.choices[0].message.content
-        return jsonify({"response": bot_reply})
+
+        # IMPORTANT: must return "reply" to match your JS
+        return jsonify({"reply": bot_reply})
 
     except Exception as e:
         print("Error:", e)
-        return jsonify({"response": "There was a server error: " + str(e)}), 500
+        return jsonify({"reply": "There was a server error: " + str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
