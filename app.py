@@ -17,7 +17,7 @@ def index():
 def chat():
     try:
         data = request.get_json()
-        user_msg = data["message"]
+        user_msg = data.get("message", "")
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -29,7 +29,7 @@ def chat():
 
         bot_reply = response.choices[0].message.content
 
-        # IMPORTANT: must return "reply" to match your JS
+        # Front end expects "reply"
         return jsonify({"reply": bot_reply})
 
     except Exception as e:

@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AI Study Chatbot</title>
+    <title>AI Neon Study Chatbot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <!-- Favicon (optional - needs static/favicon.png or .ico) -->
+    <!-- Favicon (put your neon icon in static/favicon.png) -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 </head>
-<body>
+<body class="theme-dark">
     <div class="app-wrapper">
         <!-- Left: chat history sidebar -->
         <aside class="history-sidebar">
@@ -25,11 +25,14 @@
         <!-- Right: main chat area -->
         <div class="main-area">
             <header class="app-header">
-                <div class="logo-circle">AI</div>
+                <div class="logo-circle">
+                    <span class="logo-text">AI</span>
+                </div>
                 <div class="header-text">
-                    <h1>AI Study Chatbot</h1>
+                    <h1>Neon Study Chatbot</h1>
                     <p id="current-chat-title">New chat</p>
                 </div>
+                <button id="theme-toggle" class="theme-toggle">Light mode</button>
             </header>
 
             <main class="chat-layout">
@@ -37,6 +40,14 @@
                 <section class="chat-panel">
                     <div id="chat-window"></div>
 
+                    <!-- Typing indicator -->
+                    <div id="typing-indicator" class="typing-indicator hidden">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+
+                    <!-- Input form -->
                     <form id="chat-form">
                         <input
                             type="text"
@@ -52,7 +63,7 @@
                 <aside class="side-panel">
                     <h2>Quick tips</h2>
                     <ul>
-                        <li>Ask for explanations in simple steps.</li>
+                        <li>Ask for explanations in clear steps.</li>
                         <li>Say "explain like 9th grade" for simpler answers.</li>
                         <li>Ask it to generate outlines, examples, or practice questions.</li>
                     </ul>
@@ -74,15 +85,50 @@
         const conversationList = document.getElementById("conversation-list");
         const newChatBtn = document.getElementById("new-chat-btn");
         const currentChatTitleEl = document.getElementById("current-chat-title");
+        const typingIndicator = document.getElementById("typing-indicator");
+        const themeToggleBtn = document.getElementById("theme-toggle");
+        const bodyEl = document.body;
 
-        const STORAGE_KEY = "ai_chatbot_conversations";
+        const STORAGE_KEY_CONVOS = "ai_chatbot_conversations";
+        const STORAGE_KEY_THEME = "ai_chatbot_theme";
 
         let conversations = [];
         let currentConversationId = null;
 
-        // Load from localStorage
+        // - Theme handling -
+        function loadTheme() {
+            const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+            if (savedTheme === "light") {
+                bodyEl.classList.add("theme-light");
+                bodyEl.classList.remove("theme-dark");
+                themeToggleBtn.textContent = "Dark mode";
+            } else {
+                bodyEl.classList.add("theme-dark");
+                bodyEl.classList.remove("theme-light");
+                themeToggleBtn.textContent = "Light mode";
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = bodyEl.classList.contains("theme-dark");
+            if (isDark) {
+                bodyEl.classList.remove("theme-dark");
+                bodyEl.classList.add("theme-light");
+                localStorage.setItem(STORAGE_KEY_THEME, "light");
+                themeToggleBtn.textContent = "Dark mode";
+            } else {
+                bodyEl.classList.remove("theme-light");
+                bodyEl.classList.add("theme-dark");
+                localStorage.setItem(STORAGE_KEY_THEME, "dark");
+                themeToggleBtn.textContent = "Light mode";
+            }
+        }
+
+        themeToggleBtn.addEventListener("click", toggleTheme);
+
+        // - Helpers for localStorage conversations -
         function loadConversations() {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const saved = localStorage.getItem(STORAGE_KEY_CONVOS);
             if (saved) {
                 conversations = JSON.parse(saved);
             } else {
@@ -100,7 +146,7 @@
         }
 
         function saveConversations() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+            localStorage.setItem(STORAGE_KEY_CONVOS, JSON.stringify(conversations));
         }
 
         function createNewConversation(title) {
@@ -115,7 +161,7 @@
             return conversations.find(c => c.id === currentConversationId);
         }
 
-        // Render the sidebar list
+        // - UI rendering -
         function renderConversationList() {
             conversationList.innerHTML = "";
             conversations.forEach(conv => {
@@ -139,7 +185,6 @@
             }
         }
 
-        // Render all messages in the current chat
         function renderChatWindow() {
             chatWindow.innerHTML = "";
             const current = getCurrentConversation();
@@ -150,7 +195,6 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
-        // Add one message bubble to the UI (+ optional save)
         function addMessage(text, sender, save = true) {
             const bubble = document.createElement("div");
             bubble.classList.add("message-bubble", sender === "user" ? "user" : "bot");
@@ -177,7 +221,15 @@
             }
         }
 
-        // Handle sending messages
+        function showTyping(show) {
+            if (show) {
+                typingIndicator.classList.remove("hidden");
+            } else {
+                typingIndicator.classList.add("hidden");
+            }
+        }
+
+        // - Event handlers -
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const text = userInput.value.trim();
@@ -187,8 +239,7 @@
             userInput.value = "";
             userInput.focus();
 
-            addMessage("Thinking...", "bot", false);
-            const thinkingBubble = chatWindow.lastChild;
+            showTyping(true);
 
             try {
                 const response = await fetch("/chat", {
@@ -202,26 +253,16 @@
                 const data = await response.json();
                 const reply = data.reply || "Something went wrong.";
 
-                // Update bubble text
-                thinkingBubble.textContent = reply;
+                showTyping(false);
+                addMessage(reply, "bot", true);
 
-                // Save bot reply
-                const conv = getCurrentConversation();
-                if (conv) {
-                    conv.messages.push({
-                        sender: "bot",
-                        text: reply,
-                        time: new Date().toISOString()
-                    });
-                    saveConversations();
-                }
             } catch (err) {
                 console.error(err);
-                thinkingBubble.textContent = "Error talking to the server.";
+                showTyping(false);
+                addMessage("Error talking to the server.", "bot", true);
             }
         });
 
-        // New chat button
         newChatBtn.addEventListener("click", () => {
             const newConv = createNewConversation("New chat");
             conversations.unshift(newConv);
@@ -231,7 +272,8 @@
             renderChatWindow();
         });
 
-        // Initialize
+        // - Init -
+        loadTheme();
         loadConversations();
         renderConversationList();
         renderChatWindow();
