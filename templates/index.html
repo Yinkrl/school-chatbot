@@ -1,450 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>School AI Chatbot</title>
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <title>AI Study Chatbot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #022c22 0, #022c22 30%, #020617 100%);
-      color: #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    .app-shell {
-      width: 100%;
-      max-width: 900px;
-      max-height: 700px;
-      background: #020617;
-      border-radius: 18px;
-      border: 1px solid #14532d;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    @media (max-width: 640px) {
-      .app-shell {
-        height: 100vh;
-        max-height: none;
-        border-radius: 0;
-      }
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      border-bottom: 1px solid #064e3b;
-      background: linear-gradient(to right, #059669, #16a34a);
-    }
-
-    .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 999px;
-      background: #ecfdf5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 18px;
-      color: #064e3b;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-    }
-
-    .header-text {
-      display: flex;
-      flex-direction: column;
-      color: #ecfdf5;
-    }
-
-    .title {
-      font-size: 17px;
-      font-weight: 700;
-    }
-
-    .subtitle {
-      font-size: 12px;
-      opacity: 0.9;
-    }
-
-    .preset-bar {
-      padding: 8px 14px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      border-bottom: 1px solid #064e3b;
-      background: #022c22;
-    }
-
-    .preset-btn {
-      border-radius: 999px;
-      border: 1px solid #064e3b;
-      background: #022c22;
-      color: #bbf7d0;
-      font-size: 11px;
-      padding: 6px 10px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: background 0.15s, border-color 0.15s, transform 0.08s, box-shadow 0.15s;
-      box-shadow: 0 0 0 rgba(34, 197, 94, 0);
-    }
-
-    .preset-btn:hover {
-      background: #047857;
-      border-color: #22c55e;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 12px rgba(34, 197, 94, 0.4);
-    }
-
-    .chat-area {
-      flex: 1;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      overflow-y: auto;
-      scroll-behavior: smooth;
-      background: radial-gradient(circle at top, #022c22 0, #020617 40%, #020617 100%);
-    }
-
-    .msg-row {
-      display: flex;
-      width: 100%;
-    }
-
-    .msg-row.user {
-      justify-content: flex-end;
-    }
-
-    .msg-row.bot {
-      justify-content: flex-start;
-    }
-
-    .bubble {
-      max-width: 75%;
-      padding: 9px 12px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
-      animation: fadeIn 0.18s ease-out;
-      position: relative;
-    }
-
-    .bubble.user {
-      background: #22c55e;
-      color: #022c22;
-      border-bottom-right-radius: 4px;
-    }
-
-    .bubble.bot {
-      background: #022c22;
-      color: #e5e7eb;
-      border: 1px solid #14532d;
-      border-bottom-left-radius: 4px;
-    }
-
-    .label {
-      font-size: 11px;
-      font-weight: 600;
-      margin-bottom: 3px;
-      opacity: 0.8;
-    }
-
-    .label.user {
-      color: #bbf7d0;
-      text-align: right;
-    }
-
-    .label.bot {
-      color: #6ee7b7;
-    }
-
-    .typing-wrapper {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      color: #a7f3d0;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #a7f3d0;
-      animation: blink 1s infinite ease-in-out;
-    }
-
-    .dot:nth-child(2) {
-      animation-delay: 0.16s;
-    }
-
-    .dot:nth-child(3) {
-      animation-delay: 0.32s;
-    }
-
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
-      40% { opacity: 1; transform: translateY(-1px); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .input-area {
-      padding: 10px 12px 8px;
-      border-top: 1px solid #064e3b;
-      background: #020617;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .input-shell {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #020617;
-      border-radius: 999px;
-      border: 1px solid #14532d;
-      padding: 6px 12px;
-    }
-
-    .input-shell input {
-      flex: 1;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #e5e7eb;
-      font-size: 14px;
-    }
-
-    .input-shell input::placeholder {
-      color: #6b7280;
-    }
-
-    .send-btn {
-      border: none;
-      outline: none;
-      border-radius: 999px;
-      padding: 9px 16px;
-      background: #22c55e;
-      color: #022c22;
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 8px 18px rgba(34, 197, 94, 0.5);
-      transition: background 0.12s, transform 0.08s, box-shadow 0.12s, opacity 0.12s;
-      white-space: nowrap;
-    }
-
-    .send-btn:disabled {
-      opacity: 0.6;
-      cursor: default;
-      box-shadow: none;
-      transform: none;
-    }
-
-    .send-btn:hover:not(:disabled) {
-      background: #16a34a;
-      transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(34, 197, 94, 0.7);
-    }
-
-    .hint {
-      font-size: 11px;
-      color: #6b7280;
-      text-align: center;
-    }
-
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #065f46;
-      border-radius: 999px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #020617;
-    }
-  </style>
+    <!-- Favicon (optional - needs static/favicon.png or .ico) -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 </head>
 <body>
-  <div class="app-shell">
-    <div class="header">
-      <div class="avatar">A</div>
-      <div class="header-text">
-        <div class="title">School AI Chatbot</div>
-        <div class="subtitle">Green themed study helper for homework, concepts, notes</div>
-      </div>
-    </div>
+    <div class="app-wrapper">
+        <!-- Left: chat history sidebar -->
+        <aside class="history-sidebar">
+            <div class="sidebar-header">
+                <h2>Chats</h2>
+                <button id="new-chat-btn">New chat</button>
+            </div>
+            <ul id="conversation-list"></ul>
+        </aside>
 
-    <div class="preset-bar">
-      <button class="preset-btn" onclick="usePreset('Explain this like I am in 9th grade: ')">🌱 Explain a concept</button>
-      <button class="preset-btn" onclick="usePreset('Summarize this in 3 simple bullet points: ')">📝 Summarize text</button>
-      <button class="preset-btn" onclick="usePreset('Help me build a study guide for: ')">📚 Study guide</button>
-      <button class="preset-btn" onclick="usePreset('Help me understand this math problem: ')">🧮 Math help</button>
-    </div>
+        <!-- Right: main chat area -->
+        <div class="main-area">
+            <header class="app-header">
+                <div class="logo-circle">AI</div>
+                <div class="header-text">
+                    <h1>AI Study Chatbot</h1>
+                    <p id="current-chat-title">New chat</p>
+                </div>
+            </header>
 
-    <div id="chatArea" class="chat-area"></div>
+            <main class="chat-layout">
+                <!-- Chat panel -->
+                <section class="chat-panel">
+                    <div id="chat-window"></div>
 
-    <div class="input-area">
-      <div class="input-row">
-        <div class="input-shell">
-          <input
-            id="msgInput"
-            type="text"
-            placeholder="Ask a question about school..."
-            onkeydown="if (event.key === 'Enter') sendMessage()"
-          />
+                    <form id="chat-form">
+                        <input
+                            type="text"
+                            id="user-input"
+                            placeholder="Ask me anything about your homework..."
+                            autocomplete="off"
+                        >
+                        <button type="submit">Send</button>
+                    </form>
+                </section>
+
+                <!-- Right tips panel -->
+                <aside class="side-panel">
+                    <h2>Quick tips</h2>
+                    <ul>
+                        <li>Ask for explanations in simple steps.</li>
+                        <li>Say "explain like 9th grade" for simpler answers.</li>
+                        <li>Ask it to generate outlines, examples, or practice questions.</li>
+                    </ul>
+                    <div class="tag-list">
+                        <span class="tag">Math</span>
+                        <span class="tag">Science</span>
+                        <span class="tag">English</span>
+                        <span class="tag">History</span>
+                    </div>
+                </aside>
+            </main>
         </div>
-        <button id="sendBtn" class="send-btn" onclick="sendMessage()">
-          Send 🌿
-        </button>
-      </div>
-      <div class="hint">Tip: Ask it to explain, summarize, or break things down step by step. Press Enter to send.</div>
     </div>
-  </div>
 
-  <script>
-    const chatArea = document.getElementById("chatArea");
-    const msgInput = document.getElementById("msgInput");
-    const sendBtn = document.getElementById("sendBtn");
+    <script>
+        const form = document.getElementById("chat-form");
+        const userInput = document.getElementById("user-input");
+        const chatWindow = document.getElementById("chat-window");
+        const conversationList = document.getElementById("conversation-list");
+        const newChatBtn = document.getElementById("new-chat-btn");
+        const currentChatTitleEl = document.getElementById("current-chat-title");
 
-    let typingRow = null;
+        const STORAGE_KEY = "ai_chatbot_conversations";
 
-    function addMessage(role, text) {
-      const row = document.createElement("div");
-      row.className = "msg-row " + role;
+        let conversations = [];
+        let currentConversationId = null;
 
-      const wrapper = document.createElement("div");
+        // Load from localStorage
+        function loadConversations() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                conversations = JSON.parse(saved);
+            } else {
+                conversations = [];
+            }
 
-      const label = document.createElement("div");
-      label.className = "label " + role;
-      label.textContent = role === "user" ? "You" : "AI";
+            if (conversations.length === 0) {
+                const first = createNewConversation("New chat");
+                conversations.push(first);
+                currentConversationId = first.id;
+                saveConversations();
+            } else if (!currentConversationId) {
+                currentConversationId = conversations[0].id;
+            }
+        }
 
-      const bubble = document.createElement("div");
-      bubble.className = "bubble " + role;
-      bubble.textContent = text;
+        function saveConversations() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+        }
 
-      wrapper.appendChild(label);
-      wrapper.appendChild(bubble);
-      row.appendChild(wrapper);
+        function createNewConversation(title) {
+            return {
+                id: Date.now().toString(),
+                title: title || "New chat",
+                messages: []
+            };
+        }
 
-      chatArea.appendChild(row);
-      chatArea.scrollTop = chatArea.scrollHeight;
-    }
+        function getCurrentConversation() {
+            return conversations.find(c => c.id === currentConversationId);
+        }
 
-    function showTyping() {
-      typingRow = document.createElement("div");
-      typingRow.className = "msg-row bot";
+        // Render the sidebar list
+        function renderConversationList() {
+            conversationList.innerHTML = "";
+            conversations.forEach(conv => {
+                const li = document.createElement("li");
+                li.textContent = conv.title;
+                li.classList.add("conversation-item");
+                if (conv.id === currentConversationId) {
+                    li.classList.add("active");
+                }
+                li.addEventListener("click", () => {
+                    currentConversationId = conv.id;
+                    renderConversationList();
+                    renderChatWindow();
+                });
+                conversationList.appendChild(li);
+            });
 
-      const wrapper = document.createElement("div");
-      const label = document.createElement("div");
-      label.className = "label bot";
-      label.textContent = "AI";
+            const current = getCurrentConversation();
+            if (current) {
+                currentChatTitleEl.textContent = current.title;
+            }
+        }
 
-      const bubble = document.createElement("div");
-      bubble.className = "bubble bot";
+        // Render all messages in the current chat
+        function renderChatWindow() {
+            chatWindow.innerHTML = "";
+            const current = getCurrentConversation();
+            if (!current) return;
+            current.messages.forEach(msg => {
+                addMessage(msg.text, msg.sender, false);
+            });
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
 
-      const typing = document.createElement("div");
-      typing.className = "typing-wrapper";
-      typing.innerHTML = 'Thinking <span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+        // Add one message bubble to the UI (+ optional save)
+        function addMessage(text, sender, save = true) {
+            const bubble = document.createElement("div");
+            bubble.classList.add("message-bubble", sender === "user" ? "user" : "bot");
+            bubble.textContent = text;
+            chatWindow.appendChild(bubble);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
 
-      bubble.appendChild(typing);
-      wrapper.appendChild(label);
-      wrapper.appendChild(bubble);
-      typingRow.appendChild(wrapper);
-      chatArea.appendChild(typingRow);
-      chatArea.scrollTop = chatArea.scrollHeight;
-    }
+            if (save) {
+                const conv = getCurrentConversation();
+                if (!conv) return;
+                conv.messages.push({
+                    sender,
+                    text,
+                    time: new Date().toISOString()
+                });
 
-    function hideTyping() {
-      if (typingRow && typingRow.parentNode) {
-        chatArea.removeChild(typingRow);
-      }
-      typingRow = null;
-    }
+                // First user message becomes the title
+                if (conv.title === "New chat" && sender === "user") {
+                    conv.title = text.slice(0, 30) + (text.length > 30 ? "..." : "");
+                }
 
-    function usePreset(text) {
-      msgInput.value = text;
-      msgInput.focus();
-    }
+                saveConversations();
+                renderConversationList();
+            }
+        }
 
-    async function sendMessage() {
-      const text = msgInput.value.trim();
-      if (!text || sendBtn.disabled) return;
+        // Handle sending messages
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text) return;
 
-      addMessage("user", text);
-      msgInput.value = "";
-      msgInput.focus();
+            addMessage(text, "user", true);
+            userInput.value = "";
+            userInput.focus();
 
-      sendBtn.disabled = true;
-      showTyping();
+            addMessage("Thinking...", "bot", false);
+            const thinkingBubble = chatWindow.lastChild;
 
-      try {
-        const res = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+                const reply = data.reply || "Something went wrong.";
+
+                // Update bubble text
+                thinkingBubble.textContent = reply;
+
+                // Save bot reply
+                const conv = getCurrentConversation();
+                if (conv) {
+                    conv.messages.push({
+                        sender: "bot",
+                        text: reply,
+                        time: new Date().toISOString()
+                    });
+                    saveConversations();
+                }
+            } catch (err) {
+                console.error(err);
+                thinkingBubble.textContent = "Error talking to the server.";
+            }
         });
 
-        const data = await res.json();
-        hideTyping();
+        // New chat button
+        newChatBtn.addEventListener("click", () => {
+            const newConv = createNewConversation("New chat");
+            conversations.unshift(newConv);
+            currentConversationId = newConv.id;
+            saveConversations();
+            renderConversationList();
+            renderChatWindow();
+        });
 
-        if (data.response) {
-          addMessage("bot", data.response);
-        } else if (data.error) {
-          addMessage("bot", "There was a server error: " + data.error);
-        } else {
-          addMessage("bot", "I got an unexpected response from the server.");
-        }
-      } catch (err) {
-        console.error(err);
-        hideTyping();
-        addMessage("bot", "Could not connect to the server. Make sure the Python app is running.");
-      } finally {
-        sendBtn.disabled = false;
-      }
-    }
-
-    // Optional greeting
-    addMessage("bot", "Hi, I am your school helper bot. Ask me to explain topics, summarize notes, or help plan study guides.");
-  </script>
+        // Initialize
+        loadConversations();
+        renderConversationList();
+        renderChatWindow();
+    </script>
 </body>
 </html>
