@@ -5,14 +5,17 @@
     <title>AI Neon Study Chatbot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Favicon (put favicon.png in /static) -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 </head>
 
 <body class="theme-dark">
     <div class="app-wrapper">
 
-        <!-- Sidebar -->
+        <!-- Sidebar - chat history -->
         <aside class="history-sidebar">
             <div class="sidebar-header">
                 <h2>Chats</h2>
@@ -28,7 +31,7 @@
                     <span class="logo-text">AI</span>
                 </div>
                 <div class="header-text">
-                    <h1>Study Chatbot</h1>
+                    <h1>Neon Study Chatbot</h1>
                     <p id="current-chat-title">New chat</p>
                 </div>
 
@@ -36,34 +39,42 @@
             </header>
 
             <main class="chat-layout">
+                <!-- Chat panel -->
                 <section class="chat-panel">
                     <div id="chat-window"></div>
 
-                    <!-- Typing Indicator -->
+                    <!-- Typing indicator -->
                     <div id="typing-indicator" class="typing-indicator hidden">
                         <div class="dot"></div>
                         <div class="dot"></div>
                         <div class="dot"></div>
                     </div>
 
+                    <!-- Input form -->
                     <form id="chat-form">
-                        <input id="user-input" type="text" placeholder="Ask me anything…" autocomplete="off">
+                        <input
+                            id="user-input"
+                            type="text"
+                            placeholder="Ask me anything about your homework..."
+                            autocomplete="off"
+                        >
                         <button type="submit">Send</button>
                     </form>
                 </section>
 
+                <!-- Tips panel -->
                 <aside class="side-panel">
-                    <h2>Quick Tips</h2>
+                    <h2>Quick tips</h2>
                     <ul>
-                        <li>Ask for step-by-step explanations</li>
-                        <li>Say "explain like 9th grade"</li>
-                        <li>Ask for examples + outlines</li>
+                        <li>Ask for step by step explanations.</li>
+                        <li>Say "explain like 9th grade" for simpler answers.</li>
+                        <li>Ask for outlines, examples, or practice questions.</li>
                     </ul>
                     <div class="tag-list">
                         <span class="tag">Math</span>
                         <span class="tag">Science</span>
-                        <span class="tag">History</span>
                         <span class="tag">English</span>
+                        <span class="tag">History</span>
                     </div>
                 </aside>
             </main>
@@ -71,235 +82,246 @@
     </div>
 
 <script>
-/* ---------------------------
-    SELECTORS + CONSTANTS
-------------------------------*/
-const form = document.getElementById("chat-form");
-const userInput = document.getElementById("user-input");
-const chatWindow = document.getElementById("chat-window");
-const conversationList = document.getElementById("conversation-list");
-const newChatBtn = document.getElementById("new-chat-btn");
-const typingIndicator = document.getElementById("typing-indicator");
-const currentChatTitleEl = document.getElementById("current-chat-title");
-const themeToggleBtn = document.getElementById("theme-toggle");
-const bodyEl = document.body;
+    // Selectors
+    const form = document.getElementById("chat-form");
+    const userInput = document.getElementById("user-input");
+    const chatWindow = document.getElementById("chat-window");
+    const conversationList = document.getElementById("conversation-list");
+    const newChatBtn = document.getElementById("new-chat-btn");
+    const typingIndicator = document.getElementById("typing-indicator");
+    const currentChatTitleEl = document.getElementById("current-chat-title");
+    const themeToggleBtn = document.getElementById("theme-toggle");
+    const bodyEl = document.body;
 
-const STORAGE_KEY_CONVOS = "ai_chatbot_conversations";
-const STORAGE_KEY_THEME = "ai_chatbot_theme";
+    const STORAGE_KEY_CONVOS = "ai_chatbot_conversations";
+    const STORAGE_KEY_THEME = "ai_chatbot_theme";
 
-let conversations = [];
-let currentConversationId = null;
+    let conversations = [];
+    let currentConversationId = null;
 
-/* ---------------------------
-      THEME HANDLING
-------------------------------*/
-function loadTheme() {
-    const saved = localStorage.getItem(STORAGE_KEY_THEME);
-    if (saved === "light") {
-        bodyEl.classList.replace("theme-dark", "theme-light");
-        themeToggleBtn.textContent = "Dark mode";
-    } else {
-        bodyEl.classList.replace("theme-light", "theme-dark");
-        themeToggleBtn.textContent = "Light mode";
-    }
-}
-
-themeToggleBtn.addEventListener("click", () => {
-    if (bodyEl.classList.contains("theme-dark")) {
-        bodyEl.classList.replace("theme-dark", "theme-light");
-        localStorage.setItem(STORAGE_KEY_THEME, "light");
-        themeToggleBtn.textContent = "Dark mode";
-    } else {
-        bodyEl.classList.replace("theme-light", "theme-dark");
-        localStorage.setItem(STORAGE_KEY_THEME, "dark");
-        themeToggleBtn.textContent = "Light mode";
-    }
-});
-
-/* ---------------------------
-   CHAT FORMATTING (CHATGPT-LIKE)
-------------------------------*/
-function formatMessageText(text) {
-    const escaped = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-    const paragraphs = escaped.split(/\n\s*\n/);
-
-    return paragraphs
-        .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
-        .join("");
-}
-
-/* ---------------------------
-    CONVERSATION STORAGE
-------------------------------*/
-function loadConversations() {
-    const saved = localStorage.getItem(STORAGE_KEY_CONVOS);
-    conversations = saved ? JSON.parse(saved) : [];
-
-    if (conversations.length === 0) {
-        const first = createNewConversation();
-        conversations.push(first);
-        currentConversationId = first.id;
-        saveConversations();
-    } else {
-        currentConversationId = conversations[0].id;
-    }
-}
-
-function saveConversations() {
-    localStorage.setItem(STORAGE_KEY_CONVOS, JSON.stringify(conversations));
-}
-
-function createNewConversation() {
-    return { id: Date.now().toString(), title: "New chat", messages: [] };
-}
-
-function deleteConversation(id) {
-    conversations = conversations.filter(c => c.id !== id);
-
-    if (conversations.length === 0) {
-        const fresh = createNewConversation();
-        conversations.push(fresh);
-        currentConversationId = fresh.id;
-    } else if (currentConversationId === id) {
-        currentConversationId = conversations[0].id;
+    // Theme handling
+    function loadTheme() {
+        const saved = localStorage.getItem(STORAGE_KEY_THEME);
+        if (saved === "light") {
+            bodyEl.classList.remove("theme-dark");
+            bodyEl.classList.add("theme-light");
+            themeToggleBtn.textContent = "Dark mode";
+        } else {
+            bodyEl.classList.remove("theme-light");
+            bodyEl.classList.add("theme-dark");
+            themeToggleBtn.textContent = "Light mode";
+        }
     }
 
-    saveConversations();
-    renderConversationList();
-    renderChatWindow();
-}
+    function toggleTheme() {
+        const isDark = bodyEl.classList.contains("theme-dark");
+        if (isDark) {
+            bodyEl.classList.remove("theme-dark");
+            bodyEl.classList.add("theme-light");
+            localStorage.setItem(STORAGE_KEY_THEME, "light");
+            themeToggleBtn.textContent = "Dark mode";
+        } else {
+            bodyEl.classList.remove("theme-light");
+            bodyEl.classList.add("theme-dark");
+            localStorage.setItem(STORAGE_KEY_THEME, "dark");
+            themeToggleBtn.textContent = "Light mode";
+        }
+    }
 
-function getCurrentConversation() {
-    return conversations.find(c => c.id === currentConversationId);
-}
+    themeToggleBtn.addEventListener("click", toggleTheme);
 
-/* ---------------------------
-       RENDER SIDEBAR
-------------------------------*/
-function renderConversationList() {
-    conversationList.innerHTML = "";
-    
-    conversations.forEach(conv => {
-        const li = document.createElement("li");
-        li.classList.add("conversation-item");
-        if (conv.id === currentConversationId) li.classList.add("active");
+    // ChatGPT style message formatting
+    function formatMessageText(text) {
+        const escaped = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
 
-        const title = document.createElement("span");
-        title.classList.add("conversation-title");
-        title.textContent = conv.title;
+        const paragraphs = escaped.split(/\n\s*\n/);
 
-        const delBtn = document.createElement("button");
-        delBtn.classList.add("conversation-delete");
-        delBtn.textContent = "×";
+        return paragraphs
+            .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+            .join("");
+    }
 
-        title.addEventListener("click", () => {
-            currentConversationId = conv.id;
-            renderConversationList();
-            renderChatWindow();
-        });
+    // Conversations storage
+    function loadConversations() {
+        const saved = localStorage.getItem(STORAGE_KEY_CONVOS);
+        conversations = saved ? JSON.parse(saved) : [];
 
-        delBtn.addEventListener("click", e => {
-            e.stopPropagation();
-            deleteConversation(conv.id);
-        });
+        if (conversations.length === 0) {
+            const first = createNewConversation();
+            conversations.push(first);
+            currentConversationId = first.id;
+            saveConversations();
+        } else {
+            currentConversationId = conversations[0].id;
+        }
+    }
 
-        li.appendChild(title);
-        li.appendChild(delBtn);
-        conversationList.appendChild(li);
-    });
+    function saveConversations() {
+        localStorage.setItem(STORAGE_KEY_CONVOS, JSON.stringify(conversations));
+    }
 
-    currentChatTitleEl.textContent = getCurrentConversation().title;
-}
+    function createNewConversation() {
+        return {
+            id: Date.now().toString(),
+            title: "New chat",
+            messages: []
+        };
+    }
 
-/* ---------------------------
-         RENDER CHAT
-------------------------------*/
-function renderChatWindow() {
-    chatWindow.innerHTML = "";
-    const conv = getCurrentConversation();
-    conv.messages.forEach(msg => addMessage(msg.text, msg.sender, false));
-}
+    function getCurrentConversation() {
+        return conversations.find(c => c.id === currentConversationId);
+    }
 
-/* ---------------------------
-        ADD MESSAGE
-------------------------------*/
-function addMessage(text, sender, save = true) {
-    const bubble = document.createElement("div");
-    bubble.classList.add("message-bubble", sender);
+    function deleteConversation(id) {
+        conversations = conversations.filter(c => c.id !== id);
 
-    bubble.innerHTML = formatMessageText(text);
-    chatWindow.appendChild(bubble);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-
-    if (save) {
-        const conv = getCurrentConversation();
-        conv.messages.push({ sender, text });
-
-        if (conv.title === "New chat" && sender === "user") {
-            conv.title = text.slice(0, 25) + (text.length > 25 ? "..." : "");
+        if (conversations.length === 0) {
+            const fresh = createNewConversation();
+            conversations.push(fresh);
+            currentConversationId = fresh.id;
+        } else if (currentConversationId === id) {
+            currentConversationId = conversations[0].id;
         }
 
         saveConversations();
         renderConversationList();
+        renderChatWindow();
     }
-}
 
-/* ---------------------------
-        TYPING DOTS
-------------------------------*/
-function showTyping(state) {
-    typingIndicator.classList.toggle("hidden", !state);
-}
+    // Sidebar rendering
+    function renderConversationList() {
+        conversationList.innerHTML = "";
+        conversations.forEach(conv => {
+            const li = document.createElement("li");
+            li.classList.add("conversation-item");
+            if (conv.id === currentConversationId) li.classList.add("active");
 
-/* ---------------------------
-       MESSAGE SEND EVENT
-------------------------------*/
-form.addEventListener("submit", async e => {
-    e.preventDefault();
-    
-    const text = userInput.value.trim();
-    if (!text) return;
+            const titleSpan = document.createElement("span");
+            titleSpan.classList.add("conversation-title");
+            titleSpan.textContent = conv.title;
 
-    addMessage(text, "user");
-    userInput.value = "";
+            const deleteBtn = document.createElement("button");
+            deleteBtn.classList.add("conversation-delete");
+            deleteBtn.textContent = "×";
 
-    showTyping(true);
+            titleSpan.addEventListener("click", () => {
+                currentConversationId = conv.id;
+                renderConversationList();
+                renderChatWindow();
+            });
 
-    const response = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
+            deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteConversation(conv.id);
+            });
+
+            li.appendChild(titleSpan);
+            li.appendChild(deleteBtn);
+            conversationList.appendChild(li);
+        });
+
+        const current = getCurrentConversation();
+        if (current) {
+            currentChatTitleEl.textContent = current.title;
+        }
+    }
+
+    // Chat window rendering
+    function renderChatWindow() {
+        chatWindow.innerHTML = "";
+        const conv = getCurrentConversation();
+        if (!conv) return;
+        conv.messages.forEach(msg => addMessage(msg.text, msg.sender, false));
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function addMessage(text, sender, save = true) {
+        const bubble = document.createElement("div");
+        bubble.classList.add("message-bubble", sender === "user" ? "user" : "bot");
+
+        bubble.innerHTML = formatMessageText(text);
+        chatWindow.appendChild(bubble);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        if (save) {
+            const conv = getCurrentConversation();
+            if (!conv) return;
+
+            conv.messages.push({
+                sender,
+                text,
+                time: new Date().toISOString()
+            });
+
+            if (conv.title === "New chat" && sender === "user") {
+                conv.title = text.slice(0, 30) + (text.length > 30 ? "..." : "");
+            }
+
+            saveConversations();
+            renderConversationList();
+        }
+    }
+
+    // Typing indicator
+    function showTyping(show) {
+        if (show) {
+            typingIndicator.classList.remove("hidden");
+        } else {
+            typingIndicator.classList.add("hidden");
+        }
+    }
+
+    // Sending messages
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, "user", true);
+        userInput.value = "";
+        userInput.focus();
+
+        showTyping(true);
+
+        try {
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await response.json();
+            const reply = data.reply || "Something went wrong.";
+
+            showTyping(false);
+            addMessage(reply, "bot", true);
+        } catch (err) {
+            console.error(err);
+            showTyping(false);
+            addMessage("Error talking to the server.", "bot", true);
+        }
     });
 
-    const data = await response.json();
-    showTyping(false);
-    addMessage(data.reply, "bot");
-});
+    // New chat button
+    newChatBtn.addEventListener("click", () => {
+        const fresh = createNewConversation();
+        conversations.unshift(fresh);
+        currentConversationId = fresh.id;
+        saveConversations();
+        renderConversationList();
+        renderChatWindow();
+    });
 
-/* ---------------------------
-            NEW CHAT
-------------------------------*/
-newChatBtn.addEventListener("click", () => {
-    const fresh = createNewConversation();
-    conversations.unshift(fresh);
-    currentConversationId = fresh.id;
-    saveConversations();
+    // Init
+    loadTheme();
+    loadConversations();
     renderConversationList();
     renderChatWindow();
-});
-
-/* ---------------------------
-            INIT
-------------------------------*/
-loadTheme();
-loadConversations();
-renderConversationList();
-renderChatWindow();
-
 </script>
 </body>
 </html>

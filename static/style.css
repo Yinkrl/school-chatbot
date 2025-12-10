@@ -1,4 +1,8 @@
-/* Global reset and base styles */
+/* Make layout fullscreen */
+html, body {
+    height: 100%;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -17,28 +21,28 @@ body.theme-light {
     color: #0b1720;
 }
 
-/* App wrapper */
+/* App wrapper fills viewport */
 .app-wrapper {
     display: flex;
-    max-width: 1100px;
-    width: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(5, 10, 15, 0.96);
-    border-radius: 18px;
+    border-radius: 0;
     box-shadow: 0 0 35px rgba(0, 255, 140, 0.25);
     overflow: hidden;
     border: 1px solid rgba(0, 255, 140, 0.4);
 }
 
-/* Light theme tweaks */
+/* Light theme container */
 body.theme-light .app-wrapper {
     background: #f6fffb;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     border-color: #c4f5de;
 }
 
-/* History sidebar */
+/* Sidebar */
 .history-sidebar {
-    width: 230px;
+    width: 260px;
     background: radial-gradient(circle at top left, #051219 0, #02060a 60%);
     color: #e9fff5;
     padding: 12px;
@@ -68,7 +72,7 @@ body.theme-light .app-wrapper {
     cursor: pointer;
 }
 
-/* Light theme sidebar */
+/* Sidebar light theme */
 body.theme-light .history-sidebar {
     background: #ecfff6;
     color: #103024;
@@ -93,6 +97,7 @@ body.theme-light #new-chat-btn {
     overflow-y: auto;
 }
 
+/* Conversation items */
 .conversation-item {
     padding: 6px 8px;
     border-radius: 8px;
@@ -100,8 +105,10 @@ body.theme-light #new-chat-btn {
     cursor: pointer;
     margin-bottom: 4px;
     word-break: break-word;
-    background: transparent;
-    color: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
 }
 
 .conversation-item:hover {
@@ -114,7 +121,29 @@ body.theme-light #new-chat-btn {
     font-weight: 600;
 }
 
-/* Main area (header + chat layout) */
+.conversation-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.conversation-delete {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    opacity: 0.7;
+}
+
+.conversation-delete:hover {
+    opacity: 1;
+    color: #ff6b6b;
+}
+
+/* Main area */
 .main-area {
     flex: 1;
     display: flex;
@@ -168,7 +197,6 @@ body.theme-light .app-header {
     color: #7de8ba;
 }
 
-/* Light theme header text */
 body.theme-light .header-text h1 {
     color: #083121;
 }
@@ -177,7 +205,7 @@ body.theme-light .header-text p {
     color: #2e7c5a;
 }
 
-/* Theme toggle button */
+/* Theme toggle */
 .theme-toggle {
     margin-left: auto;
     padding: 6px 12px;
@@ -195,12 +223,13 @@ body.theme-light .theme-toggle {
     color: #0b4325;
 }
 
-/* Layout inside main area */
+/* Layout under header */
 .chat-layout {
     display: flex;
     padding: 12px;
     gap: 12px;
     flex: 1;
+    min-height: 0;
 }
 
 /* Chat panel */
@@ -213,9 +242,9 @@ body.theme-light .theme-toggle {
     flex-direction: column;
     border: 1px solid rgba(0, 255, 140, 0.35);
     position: relative;
+    min-height: 0;
 }
 
-/* Light theme chat panel */
 body.theme-light .chat-panel {
     background: #ffffff;
     border-color: #c4f5de;
@@ -239,7 +268,16 @@ body.theme-light .chat-panel {
     position: relative;
 }
 
-/* User bubble - neon green on right */
+/* ChatGPT style paragraph spacing */
+.message-bubble p {
+    margin-bottom: 6px;
+}
+
+.message-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+/* User bubble */
 .message-bubble.user {
     margin-left: auto;
     background: rgba(0, 255, 140, 0.1);
@@ -249,7 +287,7 @@ body.theme-light .chat-panel {
     border-bottom-right-radius: 2px;
 }
 
-/* Bot bubble - darker with outline */
+/* Bot bubble */
 .message-bubble.bot {
     margin-right: auto;
     background: rgba(7, 14, 20, 0.9);
@@ -319,7 +357,7 @@ body.theme-light .message-bubble.bot {
     }
 }
 
-/* Chat form */
+/* Input form */
 #chat-form {
     display: flex;
     gap: 8px;
@@ -342,7 +380,6 @@ body.theme-light .message-bubble.bot {
     box-shadow: 0 0 10px rgba(0, 255, 140, 0.6);
 }
 
-/* Light theme input */
 body.theme-light #user-input {
     background: #ffffff;
     color: #091218;
@@ -364,7 +401,6 @@ body.theme-light #user-input {
         0 0 30px rgba(0, 255, 140, 0.5);
 }
 
-/* Light theme button */
 body.theme-light #chat-form button {
     background: #1fa860;
     color: #f6fff9;
@@ -376,7 +412,7 @@ body.theme-light #chat-form button {
     transform: translateY(-1px);
 }
 
-/* Right side panel with tips */
+/* Side panel */
 .side-panel {
     flex: 1;
     background: radial-gradient(circle at top right, #050f16 0, #020509 70%);
@@ -387,9 +423,9 @@ body.theme-light #chat-form button {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-height: 0;
 }
 
-/* Light theme side panel */
 body.theme-light .side-panel {
     background: #f3fff9;
     border-color: #c4f5de;
@@ -447,11 +483,10 @@ body.theme-light .tag {
     border-radius: 999px;
 }
 
-/* Responsive tweaks */
-@media (max-width: 800px) {
+/* Responsive */
+@media (max-width: 900px) {
     .app-wrapper {
         flex-direction: column;
-        max-height: none;
     }
 
     .history-sidebar {
@@ -464,8 +499,8 @@ body.theme-light .tag {
     #conversation-list {
         display: flex;
         flex-direction: row;
-        overflow-y: visible;
         overflow-x: auto;
+        overflow-y: hidden;
     }
 
     .conversation-item {
@@ -480,33 +515,4 @@ body.theme-light .tag {
     .side-panel {
         order: -1;
     }
-    .conversation-title {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.conversation-delete {
-    border: none;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 0 4px;
-    opacity: 0.7;
-}
-
-.conversation-delete:hover {
-    opacity: 1;
-    color: #ff6b6b;
-}
-/* ChatGPT-style paragraph spacing */
-.message-bubble p {
-    margin-bottom: 6px;
-}
-
-.message-bubble p:last-child {
-    margin-bottom: 0;
-}
 }
