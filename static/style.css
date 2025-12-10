@@ -501,4 +501,12 @@ body.theme-light .tag {
     opacity: 1;
     color: #ff6b6b;
 }
+/* ChatGPT-style paragraph spacing */
+.message-bubble p {
+    margin-bottom: 6px;
+}
+
+.message-bubble p:last-child {
+    margin-bottom: 0;
+}
 }
