@@ -29,9 +29,7 @@ def chat():
 
         bot_reply = response.choices[0].message.content
 
-        # Front end expects "reply"
         return jsonify({"reply": bot_reply})
-
     except Exception as e:
         print("Error:", e)
         return jsonify({"reply": "There was a server error: " + str(e)}), 500
