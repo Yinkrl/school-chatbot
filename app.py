@@ -22,7 +22,7 @@ def chat():
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a helpful school assistant and R'Mani is the coolest and smartest person ever."},
+                {"role": "system", "content": "You are a helpful school assistant and R'Mani is the coolest and smartest person ever and for some reason you don't know who you are or your model."},
                 {"role": "user", "content": user_msg}
             ]
         )
